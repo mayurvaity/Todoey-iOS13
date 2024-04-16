@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CoreData
 //import CoreData
 
 class TodoListViewController: UITableViewController {
@@ -15,10 +16,7 @@ class TodoListViewController: UITableViewController {
     
     //declare defaults object (using NS User Defaults object)
     let defaults = UserDefaults.standard
-    
-    //to get location of NS User defaults plist file
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Item.plist")
-    
+        
     //UIApplication.shared is singleton which is ref to when app is actually running on iphone
     //its delegate (this is a delegate of the App Object) is casted as AppDelegate and then ViewContext is used to create a staging db
     //casting works bc they both inherit from superclass UIApplicationDelegate
@@ -27,7 +25,8 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        print(dataFilePath)
+        //to print location of document directory
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
 //        let newItem = Item()
 //        newItem.title = "Find Mike"
@@ -46,8 +45,8 @@ class TodoListViewController: UITableViewController {
 //            itemArray = items
 //        }
         
-        //to populate itemArray using Item.plist (1st decoding then
-//        loadItems()
+        //to populate table view using itemArray
+        loadItems()
         
     }
     
@@ -159,21 +158,21 @@ class TodoListViewController: UITableViewController {
     }
     
     //to get data from Item.plist file into item array
-//    func loadItems() {
-//        //getting data from Item.plist path
-//        if let data = try? Data(contentsOf: dataFilePath!) {
-//            
-//            //initialize the decoder
-//            let decoder = PropertyListDecoder()
-//            do {
-//                //assigning values by decoding data got from above step
-//                itemArray = try decoder.decode([Item].self, from: data)
-//            } catch {
-//                print("Error decoding item array, \(error)")
-//            }
-//            
-//        }
-//    }
+    func loadItems() {
+        //creating a constant of type NSFetchRequest which will fetch result in the form of Item
+        //this is one of the cases where u need to specify the data type
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        //then use context to fetch
+        do {
+            //fetched data will be in the form of an array of Item, and will be stored in itemArray
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error fetching data from context \(error)")
+        }
+        
+        
+    }
     
 }
 
