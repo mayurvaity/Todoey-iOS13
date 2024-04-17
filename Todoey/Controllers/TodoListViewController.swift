@@ -81,6 +81,14 @@ class TodoListViewController: UITableViewController {
         //printing selected cells value from array by using index postion from selected cell
         print(itemArray[indexPath.row])
         
+        //for delete example
+//        //deleting from context, bc if we del from itemarray 1st then we won't b able to del from context
+//        //delete method needs entire object as parameter to delete from core data
+//        context.delete(itemArray[indexPath.row])
+//        //removing from itemArray
+//        itemArray.remove(at: indexPath.row)
+        
+        
         //setting done property of selected item in the array
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
@@ -157,11 +165,9 @@ class TodoListViewController: UITableViewController {
         self.tableView.reloadData()
     }
     
-    //to get data from Item.plist file into item array
-    func loadItems() {
-        //creating a constant of type NSFetchRequest which will fetch result in the form of Item
-        //this is one of the cases where u need to specify the data type
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+    //to perform fetch requests and reloading the tableView,
+    //for cases where need to fecth complete data the request parameter is optional and has a default value
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest()) {
         
         //then use context to fetch
         do {
@@ -171,8 +177,31 @@ class TodoListViewController: UITableViewController {
             print("Error fetching data from context \(error)")
         }
         
-        
+        //need to reload tableView as itemArray has changed by above request
+        //this calls cellForRowAt IndexPath method
+        tableView.reloadData()
     }
     
 }
 
+//MARK: - Search Bar Delegate Methods
+
+extension TodoListViewController : UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //create a request to fetch data from db
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        //prepare query using predicate
+        //adding query (predicate) to the request
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        
+        //to specify sorting for the fetch request, below specifying column on which this needs to be sorted
+        //request can accept sorting on multiple cols, so it is expecting an array of NSSortDescriptors
+        //in below example we r sorting single col only
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        //calling load items with above fetched request data
+        loadItems(with: request)
+    }
+}
