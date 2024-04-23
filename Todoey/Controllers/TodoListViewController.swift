@@ -204,4 +204,21 @@ extension TodoListViewController : UISearchBarDelegate {
         //calling load items with above fetched request data
         loadItems(with: request)
     }
+    
+    //to get a full list in the tableView when search bar is made empty
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        //to check if searchbar has zero text count
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            //to make it stop editing and disabling the keyboard
+            //also need to run this in dispatchqueue, so that this won't freeze searchBar (and will keep app responsive)
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            
+        }
+    }
+    
+    
 }
