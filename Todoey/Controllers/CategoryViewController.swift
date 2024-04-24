@@ -81,6 +81,27 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    
+    //MARK: - TableView Delegate Methods
+    //below method gets triggered when clicked on one of the cells
+    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        //below code will perform segue to go to next page (ie Items page for that category)
+        performSegue(withIdentifier: "goToItems", sender: self)
+    }
+    
+    //below method will run before performing segue, here we can prepare for actions need to be done before moving to next page
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        //creating object of next page's VC, to be able to work with its properties
+        let destinationVC = segue.destination as! TodoListViewController
+        
+        //to get category info of selected cell on category tableview
+        if let indexPath = tableView.indexPathForSelectedRow {
+            //to assign the category data to the selectedCategory var in next page's VC (TodoListViewController)
+            destinationVC.selectedCategory = categoryArray[indexPath.row] 
+        }
+    }
+    
+    
     //MARK: - Add New Categories
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
@@ -120,7 +141,6 @@ class CategoryViewController: UITableViewController {
     
    
     
-    //MARK: - TableView Delegate Methods
     
     
     

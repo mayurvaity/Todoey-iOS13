@@ -14,6 +14,14 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     
+    //a variable to store category info when selected on category page 
+    var selectedCategory : Category? {
+        //didset gets called when some value has been assigned to the variable
+        didSet{
+            loadItems()
+        }
+    }
+    
     //declare defaults object (using NS User Defaults object)
     let defaults = UserDefaults.standard
         
@@ -127,6 +135,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = textField.text!
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory  //assigning selcetedCategory (obtained from last page's segue perform call)
             //need to do the validation later to get only text not nils
             self.itemArray.append(newItem)
             
@@ -167,7 +176,18 @@ class TodoListViewController: UITableViewController {
     
     //to perform fetch requests and reloading the tableView,
     //for cases where need to fecth complete data the request parameter is optional and has a default value
-    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest()) {
+    func loadItems(with request : NSFetchRequest<Item> = Item.fetchRequest(), predicate: NSPredicate? = nil) {
+        
+        //creating a predicate (query) to filterout only items related to selected category
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        //to make sure we r not unwrapping a nil predicate
+        if let additionalPredicate = predicate {
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        } else {
+            //if predicate is nil, then we apply only category filter
+            request.predicate = categoryPredicate
+        }
         
         //then use context to fetch
         do {
@@ -193,8 +213,7 @@ extension TodoListViewController : UISearchBarDelegate {
         let request : NSFetchRequest<Item> = Item.fetchRequest()
         
         //prepare query using predicate
-        //adding query (predicate) to the request
-        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
         
         //to specify sorting for the fetch request, below specifying column on which this needs to be sorted
         //request can accept sorting on multiple cols, so it is expecting an array of NSSortDescriptors
@@ -202,7 +221,7 @@ extension TodoListViewController : UISearchBarDelegate {
         request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
         
         //calling load items with above fetched request data
-        loadItems(with: request)
+        loadItems(with: request, predicate: predicate)
     }
     
     //to get a full list in the tableView when search bar is made empty
