@@ -7,17 +7,15 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
     
-    var categoryArray = [Category]() 
+    let realm = try! Realm()
     
-    //UIApplication.shared is singleton which is ref to when app is actually running on iphone
-    //its delegate (this is a delegate of the App Object) is casted as AppDelegate and then ViewContext is used to create a staging db
-    //casting works bc they both inherit from superclass UIApplicationDelegate
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
-    
+    //category array - a Results container to keep Category objects
+    var categoryArray: Results<Category>?
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -32,7 +30,7 @@ class CategoryViewController: UITableViewController {
 
     //MARK: - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray.count
+        return categoryArray?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -41,10 +39,10 @@ class CategoryViewController: UITableViewController {
         //creating a cell (UITableViewCellz) to pass at tableView
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        let category = categoryArray[indexPath.row]
+        let category = categoryArray?[indexPath.row]
         
         //setting value of the text label in this cell to one of the values from array
-        cell.textLabel?.text = category.name 
+        cell.textLabel?.text = category?.name ?? "No Categories Added Yet"
         
         //returning cell
         return cell
@@ -52,10 +50,12 @@ class CategoryViewController: UITableViewController {
     
     //MARK: - Data Manipulation Methods
     //to save item to the list 
-    func saveCategories() {
+    func save(category: Category) {
         
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving context \(error)")
         }
@@ -66,17 +66,12 @@ class CategoryViewController: UITableViewController {
     
     //to perform fetch requests and reloading the tableView,
     //for cases where need to fecth complete data the request parameter is optional and has a default value
-    func loadCategories(with request : NSFetchRequest<Category> = Category.fetchRequest()) {
+    func loadCategories() {
         
-        //then use context to fetch
-        do {
-            //fetched data will be in the form of an array of Item, and will be stored in itemArray
-            categoryArray = try context.fetch(request)
-        } catch {
-            print("Error fetching data from context \(error)")
-        }
+        //to get categories data from realm
+        categoryArray = realm.objects(Category.self)
         
-        //need to reload tableView as itemArray has changed by above request
+        //need to reload tableView as categoryArray has changed by above request
         //this calls cellForRowAt IndexPath method
         tableView.reloadData()
     }
@@ -97,7 +92,7 @@ class CategoryViewController: UITableViewController {
         //to get category info of selected cell on category tableview
         if let indexPath = tableView.indexPathForSelectedRow {
             //to assign the category data to the selectedCategory var in next page's VC (TodoListViewController)
-            destinationVC.selectedCategory = categoryArray[indexPath.row] 
+            destinationVC.selectedCategory = categoryArray?[indexPath.row]
         }
     }
     
@@ -114,16 +109,14 @@ class CategoryViewController: UITableViewController {
             //what will happen once user press the Add Item button on our UIAlert
             print(textField.text!)
             
-            //above context is used while creating object of Category
-            let newCategory = Category(context: self.context)
+            //created a new object to store category details
+            let newCategory = Category()
             newCategory.name = textField.text!
             
-            //need to do the validation later to get only text not nils
-            //appending this new category to the categoryArray
-            self.categoryArray.append(newCategory)
+            //no need to append to the CategoryArray, as it is an auto-updating container, it will automatically get added
             
             //calling save Items method to save context data into our db table
-            self.saveCategories()
+            self.save(category: newCategory)
         }
         
         alert.addTextField { alertTextField in
