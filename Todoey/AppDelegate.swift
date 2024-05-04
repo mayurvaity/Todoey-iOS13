@@ -26,7 +26,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         //to get location of realm db
         print(Realm.Configuration.defaultConfiguration.fileURL)  
         
-    
         do {
             //to create a realm object here, it acts as CONTEXT
             let realm = try Realm()

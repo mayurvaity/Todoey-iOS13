@@ -8,7 +8,7 @@
 
 import UIKit
 import RealmSwift
-//import CoreData
+
 
 class TodoListViewController: UITableViewController {
     
@@ -28,29 +28,6 @@ class TodoListViewController: UITableViewController {
         
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        //to print location of document directory
-        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
-//        let newItem = Item()
-//        newItem.title = "Find Mike"
-//        itemArray.append(newItem)
-//        
-//        let newItem2 = Item()
-//        newItem2.title = "Buy Eggos"
-//        itemArray.append(newItem2)
-//        
-//        let newItem3 = Item()
-//        newItem3.title = "Destroy Demogorgon"
-//        itemArray.append(newItem3)
-        
-        //getting array from user defaults plist file and setting its value to above created itemArray (which is used to keep list)
-//        if let items = defaults.array(forKey: "TodoListArray") as? [Item] {
-//            itemArray = items
-//        }
-        
-        //to populate table view using itemArray
-//        loadItems()
         
     }
     
@@ -82,21 +59,57 @@ class TodoListViewController: UITableViewController {
     }
     
     //MARK: - TableView Delegate Methods
+    //update example
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //printing selected cells value from array by using index postion from selected cell
         if let cellDetails = todoItems?[indexPath.row] {
             print(cellDetails)
         }
-//        //setting done property of selected item in the array
-//        todoItems[indexPath.row].done = !todoItems[indexPath.row].done
-//        
-//        //to write updated check mark to Item.plist and reload tableView data
-//        saveItems()
+        
+        //getting item data from todoItems collection, using cell indexPath
+        if let item = todoItems?[indexPath.row] {
+            do {
+                //to update as well, we use write method
+                try realm.write {
+                    //just updating that item here (within write method), gets synced everywhere (collection and realm db)
+                    item.done = !item.done
+                }
+            } catch {
+                print("Error saving done status, \(error)")
+            }
+        }
+        //to reload all the data in tableview
+        tableView.reloadData()
         
         //to deselect the row after clicking
         tableView.deselectRow(at: indexPath, animated: true)
-        
     }
+    
+    //delete example
+//    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        //printing selected cells value from array by using index postion from selected cell
+//        if let cellDetails = todoItems?[indexPath.row] {
+//            print(cellDetails)
+//        }
+//        
+//        //getting item data from todoItems collection, using cell indexPath
+//        if let item = todoItems?[indexPath.row] {
+//            do {
+//                //to update as well, we use write method
+//                try realm.write {
+//                    //just deleting that item here (within write method), gets synced everywhere (collection and realm db)
+//                    realm.delete(item)
+//                }
+//            } catch {
+//                print("Error saving done status, \(error)")
+//            }
+//        }
+//        //to reload all the data in tableview
+//        tableView.reloadData()
+//        
+//        //to deselect the row after clicking
+//        tableView.deselectRow(at: indexPath, animated: true)
+//    }
     
     //MARK: - Add New Items
     
@@ -112,11 +125,15 @@ class TodoListViewController: UITableViewController {
             //what will happen once user press the Add Item button on our UIAlert
             print(textField.text!)
             
+            //checking if selectedCategory is available
             if let currentCategory = self.selectedCategory {
                 do {
                     try self.realm.write {
+                        //creating new item (within write method) allows us to write this new item to items colln as well as in realm db
                         let newItem = Item()
                         newItem.title = textField.text!
+                        newItem.dateCreated = Date() 
+                        //for relationship need to add this item in that category, this gets synced with realm db
                         currentCategory.items.append(newItem)
                     }
                 } catch {
@@ -127,6 +144,7 @@ class TodoListViewController: UITableViewController {
             self.tableView.reloadData()
         }
         
+        //add text field in the alert (pop-up) to specify new item name
         alert.addTextField { alertTextField in
             alertTextField.placeholder = "Create new item"
             textField = alertTextField
@@ -163,38 +181,31 @@ class TodoListViewController: UITableViewController {
 
 //MARK: - Search Bar Delegate Methods
 
-//extension TodoListViewController : UISearchBarDelegate {
-//
-//    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-//        //create a request to fetch data from db
-//        let request : NSFetchRequest<Item> = Item.fetchRequest()
-//        
-//        //prepare query using predicate
-//        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
-//        
-//        //to specify sorting for the fetch request, below specifying column on which this needs to be sorted
-//        //request can accept sorting on multiple cols, so it is expecting an array of NSSortDescriptors
-//        //in below example we r sorting single col only
-//        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
-//        
-//        //calling load items with above fetched request data
-//        loadItems(with: request, predicate: predicate)
-//    }
-//    
-//    //to get a full list in the tableView when search bar is made empty
-//    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-//        //to check if searchbar has zero text count
-//        if searchBar.text?.count == 0 {
-//            loadItems()
-//            
-//            //to make it stop editing and disabling the keyboard
-//            //also need to run this in dispatchqueue, so that this won't freeze searchBar (and will keep app responsive)
-//            DispatchQueue.main.async {
-//                searchBar.resignFirstResponder()
-//            }
-//            
-//        }
-//    }
-//    
-//    
-//}
+extension TodoListViewController : UISearchBarDelegate {
+
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //filtering todo items colln
+        //filter - using this filter with created predicate (on the fly)
+        //sorted - sorting can be specified here
+        todoItems = todoItems?.filter("title CONTAINS[cd] %@", searchBar.text).sorted(byKeyPath: "dateCreated", ascending: false)
+        
+        tableView.reloadData()
+    }
+    
+    //to get a full list in the tableView when search bar is made empty
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        //to check if searchbar has zero text count
+        if searchBar.text?.count == 0 {
+            loadItems()
+            
+            //to make it stop editing and disabling the keyboard
+            //also need to run this in dispatchqueue, so that this won't freeze searchBar (and will keep app responsive)
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+            
+        }
+    }
+    
+    
+}
