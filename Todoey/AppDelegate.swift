@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreData
+import RealmSwift
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -21,6 +22,27 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         //to get path of the plist file where "user defaults" will be stored
         //        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
+        
+        //to get location of realm db
+        print(Realm.Configuration.defaultConfiguration.fileURL)  
+        
+        //creating an object of data class (custom class)
+        let data = Data()
+        data.name = "Mayur"
+        data.age = 12
+        
+        do {
+            //to create a realm object here, it acts as CONTEXT
+            let realm = try Realm()
+            
+            //preparing to write to realm db
+            try realm.write {
+                //adding an entry to realm db
+                realm.add(data)
+            }
+        } catch {
+            print("Error initialising new realm, \(error)")
+        }
         
         
         
