@@ -8,4 +8,7 @@ target 'Todoey' do
 
 pod 'RealmSwift'
 
+# Latest release in CocoaPods
+pod 'SwipeCellKit'
+
 end

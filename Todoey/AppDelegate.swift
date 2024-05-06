@@ -18,23 +18,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         
-        //        print("didFinishLaunchingWithOptions")
-        
-        //to get path of the plist file where "user defaults" will be stored
-        //        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
-        
         //to get location of realm db
-        print(Realm.Configuration.defaultConfiguration.fileURL)  
+        print(Realm.Configuration.defaultConfiguration.fileURL)
         
         do {
             //to create a realm object here, it acts as CONTEXT
-            let realm = try Realm()
+            // making it underscore as we r not using it 
+            _ = try Realm()
     
         } catch {
             print("Error initialising new realm, \(error)")
         }
-        
-        
         
         return true
     }
@@ -42,39 +36,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(_ application: UIApplication) {
         print("applicationWillTerminate")
     }
-    
-    //MARK: - Added from CoreDataTest
-    
-    // MARK: - Core Data stack
-    //NSPersistentContainer means SQLlite database
-    lazy var persistentContainer: NSPersistentContainer = {
-        //below name should match with our data model file, hence changed to DataModel 
-        let container = NSPersistentContainer(name: "DataModel")
-        container.loadPersistentStores(completionHandler: { (storeDescription, error) in
-            if let error = error as NSError? {
-                
-                fatalError("Unresolved error \(error), \(error.userInfo)")
-            }
-        })
-        return container
-    }()
-    
-    // MARK: - Core Data Saving support
-    
-    func saveContext () {
-        //context is like a staging area before data is stored in the database mentioned above 
-        let context = persistentContainer.viewContext
-        if context.hasChanges {
-            do {
-                try context.save()
-            } catch {
-                let nserror = error as NSError
-                fatalError("Unresolved error \(nserror), \(nserror.userInfo)")
-            }
-        }
-    }
-    
-    
     
 }
 
