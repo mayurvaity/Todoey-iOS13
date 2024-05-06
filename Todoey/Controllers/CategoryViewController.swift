@@ -10,7 +10,7 @@ import UIKit
 import RealmSwift
 import SwipeCellKit
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     
@@ -21,13 +21,11 @@ class CategoryViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        //to print location of document directory
+        //to print location of document directory (this is where data files are kept)
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         
         //loading category data
         loadCategories()
-        
-        tableView.rowHeight = 80.0
         
     }
 
@@ -38,17 +36,13 @@ class CategoryViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         print("CategoryVC cellForRowAt indexPath called")
-        
-        //creating a cell (UITableViewCellz) to pass at tableView
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
+        //inheriting from super class 
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         let category = categoryArray?[indexPath.row]
         
         //setting value of the text label in this cell to one of the values from array
         cell.textLabel?.text = category?.name ?? "No Categories Added Yet"
-        
-        //setting delegate for swipeable cell
-        cell.delegate = self
         
         //returning cell
         return cell
@@ -82,6 +76,24 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
+    //MARK: - Delete Data from Swipe
+    override func updateModel(at indexPath: IndexPath) {
+        
+        //getting category data from categoryarray collection, using cell indexPath
+        if let categoryForDeletion = self.categoryArray?[indexPath.row] {
+            do {
+                //to delete as well, we use write method
+                try self.realm.write {
+                    //just deleting that category here (within write method), gets synced everywhere (collection and realm db)
+                    self.realm.delete(categoryForDeletion)
+                }
+            } catch {
+                print("Error deleting a category, \(error)")
+            }
+            //reloading tableview after deletion (no need, as swipecellkit handles this in one of its delegate methods) 
+//            self.tableView.reloadData()
+        }
+    }
     
     //MARK: - TableView Delegate Methods
     //below method gets triggered when clicked on one of the cells
@@ -140,47 +152,5 @@ class CategoryViewController: UITableViewController {
 }
 
 
-//MARK: - Swipe Cell Delegate Methods
-extension CategoryViewController: SwipeTableViewCellDelegate {
-    
-    //to implement swipe right action on cells 
-    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
-        guard orientation == .right else { return nil }
-
-        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
-            // handle action by updating model with deletion
-            print("Item deleted")
-            
-            //getting category data from categoryarray collection, using cell indexPath
-            if let categoryForDeletion = self.categoryArray?[indexPath.row] {
-                do {
-                    //to delete as well, we use write method
-                    try self.realm.write {
-                        //just deleting that category here (within write method), gets synced everywhere (collection and realm db)
-                        self.realm.delete(categoryForDeletion)
-                    }
-                } catch {
-                    print("Error deleting a category, \(error)")
-                }
-                //reloading tableview after deletion
-//                self.tableView.reloadData()
-            }
-        }			
-
-        // customize the action appearance
-        deleteAction.image = UIImage(named: "delete-icon")
-
-        return [deleteAction]
-    }
-    
-    //for swiping it completely to delete 
-    //this will also handle reloading tableview, so no need to call it in above method
-    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
-        var options = SwipeOptions()
-        options.expansionStyle = .destructive
-        return options
-    }
-    
-}
 
 
