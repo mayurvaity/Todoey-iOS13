@@ -10,7 +10,8 @@ import Foundation
 import RealmSwift
 
 class Category: Object {
-    @objc dynamic var name: String = "" 
+    @objc dynamic var name: String = ""
+    @objc dynamic var bgcolor: String = ""
     
     //to define relationship with Item class
     let items = List<Item>()

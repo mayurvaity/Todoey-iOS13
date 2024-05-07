@@ -9,6 +9,7 @@
 import UIKit
 import RealmSwift
 import SwipeCellKit
+import ChameleonFramework
 
 class CategoryViewController: SwipeTableViewController {
     
@@ -27,6 +28,9 @@ class CategoryViewController: SwipeTableViewController {
         //loading category data
         loadCategories()
         
+        //to remove lines between cells 
+        tableView.separatorColor = .none
+        
     }
 
     //MARK: - TableView Datasource Methods
@@ -43,6 +47,8 @@ class CategoryViewController: SwipeTableViewController {
         
         //setting value of the text label in this cell to one of the values from array
         cell.textLabel?.text = category?.name ?? "No Categories Added Yet"
+        //for setting background colors to cells
+        cell.backgroundColor = UIColor(hexString: category?.bgcolor ?? "FFF") 
         
         //returning cell
         return cell
@@ -130,6 +136,8 @@ class CategoryViewController: SwipeTableViewController {
             //created a new object to store category details
             let newCategory = Category()
             newCategory.name = textField.text!
+            //setting a random color hex value in string format
+            newCategory.bgcolor = UIColor.randomFlat().hexValue()
             
             //no need to append to the CategoryArray, as it is an auto-updating container, it will automatically get added
             
