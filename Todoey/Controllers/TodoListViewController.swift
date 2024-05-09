@@ -8,12 +8,14 @@
 
 import UIKit
 import RealmSwift
-
+import ChameleonFramework
 
 class TodoListViewController: SwipeTableViewController {
     
     var todoItems: Results<Item>?
     let realm = try! Realm()
+    
+    @IBOutlet weak var searchBar: UISearchBar!
     
     //a variable to store category info when selected on category page
     var selectedCategory : Category? {
@@ -28,7 +30,36 @@ class TodoListViewController: SwipeTableViewController {
         
     override func viewDidLoad() {
         super.viewDidLoad()
+        //to set separator line between cells to none
+        tableView.separatorStyle = .none
         
+    }
+    
+    //need to do navigation bar changes in below method, as navcontroller is not ready when viewdidload is running
+    override func viewWillAppear(_ animated: Bool) {
+        //setting navigation bar properties
+        if let hexColor = selectedCategory?.bgcolor {
+            //setting title for that page
+            title = selectedCategory?.name
+            
+            //checking if nav controller is ready, and creating a variable to access it
+            guard let navBar = navigationController?.navigationBar else {
+                fatalError("Navigation controller does not exist.")
+            }
+            
+            if let navBarColour = UIColor(hexString: hexColor) {
+                //setting background color of navbar
+                navBar.backgroundColor = navBarColour
+                //setting color of buttons in navbar
+                navBar.tintColor = ContrastColorOf(navBarColour, returnFlat: true)
+                //setting color of title text 
+                navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColour, returnFlat: true)]
+                
+                //setting bg color of searchbar
+                searchBar.barTintColor = navBarColour
+            }
+            
+        }
     }
     
     //MARK: - TableView Datasource Mathods
@@ -47,6 +78,13 @@ class TodoListViewController: SwipeTableViewController {
             //setting value of the text label in this cell to one of the values from array
             cell.textLabel?.text = item.title
             
+            //preparing color for bg of cells
+            if let colour = UIColor(hexString: selectedCategory!.bgcolor)?.darken(byPercentage: CGFloat(CGFloat(indexPath.row) / CGFloat(todoItems!.count))) {
+                cell.backgroundColor = colour
+                cell.textLabel?.textColor = ContrastColorOf(colour, returnFlat: true)
+            }
+                
+                
             //setting done property to each cell
             cell.accessoryType = item.done ? .checkmark : .none
         } else {

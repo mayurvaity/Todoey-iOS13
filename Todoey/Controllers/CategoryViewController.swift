@@ -32,6 +32,22 @@ class CategoryViewController: SwipeTableViewController {
         tableView.separatorColor = .none
         
     }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        guard let navBar = navigationController?.navigationBar else {
+            fatalError("Navigation bar nowhere to be found.")
+        }
+        
+        if let navBarColor = UIColor(hexString: "FFF") {
+            //setting background color of navbar
+            navBar.backgroundColor = navBarColor
+            //setting color of text in nav bar (including + button)
+            navBar.tintColor = ContrastColorOf(navBarColor, returnFlat: true)
+            //setting title color for nav bar
+            navBar.largeTitleTextAttributes = [NSAttributedString.Key.foregroundColor : ContrastColorOf(navBarColor, returnFlat: true)]
+        }
+        
+    }
 
     //MARK: - TableView Datasource Methods
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -43,12 +59,16 @@ class CategoryViewController: SwipeTableViewController {
         //inheriting from super class 
         let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
-        let category = categoryArray?[indexPath.row]
-        
-        //setting value of the text label in this cell to one of the values from array
-        cell.textLabel?.text = category?.name ?? "No Categories Added Yet"
-        //for setting background colors to cells
-        cell.backgroundColor = UIColor(hexString: category?.bgcolor ?? "FFF") 
+        if let category = categoryArray?[indexPath.row] {
+            //setting value of the text label in this cell to one of the values from array
+            cell.textLabel?.text = category.name ?? "No Categories Added Yet"
+            
+            guard let categoryColor = UIColor(hexString: category.bgcolor) else {fatalError("Category color is nil.")}
+            //for setting background colors to cells
+            cell.backgroundColor = categoryColor
+            //setting text color for the string (contrast of cell color)
+            cell.textLabel?.textColor = ContrastColorOf(categoryColor, returnFlat: true)
+        }
         
         //returning cell
         return cell
@@ -106,6 +126,9 @@ class CategoryViewController: SwipeTableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         //below code will perform segue to go to next page (ie Items page for that category)
         performSegue(withIdentifier: "goToItems", sender: self)
+        
+        //to deselect the row after clicking
+        tableView.deselectRow(at: indexPath, animated: true)
     }
     
     //below method will run before performing segue, here we can prepare for actions need to be done before moving to next page
